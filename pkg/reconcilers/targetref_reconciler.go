@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	gatewayapiv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	gatewayapiv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kuadrant/kuadrant-operator/pkg/common"
 )
@@ -42,10 +43,10 @@ func (r *TargetRefReconciler) Reconcile(context.Context, ctrl.Request) (ctrl.Res
 	return reconcile.Result{}, nil
 }
 
-func (r *TargetRefReconciler) FetchValidGateway(ctx context.Context, key client.ObjectKey) (*gatewayapiv1alpha2.Gateway, error) {
+func (r *TargetRefReconciler) FetchValidGateway(ctx context.Context, key client.ObjectKey) (*gatewayapiv1beta1.Gateway, error) {
 	logger, _ := logr.FromContext(ctx)
 
-	gw := &gatewayapiv1alpha2.Gateway{}
+	gw := &gatewayapiv1beta1.Gateway{}
 	err := r.Client().Get(ctx, key, gw)
 	logger.V(1).Info("FetchValidGateway", "gateway", key, "err", err)
 	if err != nil {
@@ -59,10 +60,10 @@ func (r *TargetRefReconciler) FetchValidGateway(ctx context.Context, key client.
 	return gw, nil
 }
 
-func (r *TargetRefReconciler) FetchValidHTTPRoute(ctx context.Context, key client.ObjectKey) (*gatewayapiv1alpha2.HTTPRoute, error) {
+func (r *TargetRefReconciler) FetchValidHTTPRoute(ctx context.Context, key client.ObjectKey) (*gatewayapiv1beta1.HTTPRoute, error) {
 	logger, _ := logr.FromContext(ctx)
 
-	httpRoute := &gatewayapiv1alpha2.HTTPRoute{}
+	httpRoute := &gatewayapiv1beta1.HTTPRoute{}
 	err := r.Client().Get(ctx, key, httpRoute)
 	logger.V(1).Info("FetchValidHTTPRoute", "httpRoute", key, "err", err)
 	if err != nil {
@@ -72,7 +73,7 @@ func (r *TargetRefReconciler) FetchValidHTTPRoute(ctx context.Context, key clien
 	// Check HTTProute parents (gateways) in the status object
 	// if any of the current parent gateways reports not "Admitted", return error
 	for _, parentRef := range httpRoute.Spec.CommonRouteSpec.ParentRefs {
-		routeParentStatus := func(pRef gatewayapiv1alpha2.ParentReference) *gatewayapiv1alpha2.RouteParentStatus {
+		routeParentStatus := func(pRef gatewayapiv1beta1.ParentReference) *gatewayapiv1beta1.RouteParentStatus {
 			for idx := range httpRoute.Status.RouteStatus.Parents {
 				if reflect.DeepEqual(pRef, httpRoute.Status.RouteStatus.Parents[idx].ParentRef) {
 					return &httpRoute.Status.RouteStatus.Parents[idx]
@@ -115,7 +116,7 @@ func (r *TargetRefReconciler) FetchValidTargetRef(ctx context.Context, targetRef
 // TargetedGatewayKeys returns the list of gateways that are being referenced from the target.
 func (r *TargetRefReconciler) TargetedGatewayKeys(ctx context.Context, targetNetworkObject client.Object) []client.ObjectKey {
 	switch obj := targetNetworkObject.(type) {
-	case *gatewayapiv1alpha2.HTTPRoute:
+	case *gatewayapiv1beta1.HTTPRoute:
 		gwKeys := make([]client.ObjectKey, 0)
 		for _, parentRef := range obj.Spec.CommonRouteSpec.ParentRefs {
 			gwKey := client.ObjectKey{Name: string(parentRef.Name), Namespace: obj.Namespace}
@@ -126,7 +127,7 @@ func (r *TargetRefReconciler) TargetedGatewayKeys(ctx context.Context, targetNet
 		}
 		return gwKeys
 
-	case *gatewayapiv1alpha2.Gateway:
+	case *gatewayapiv1beta1.Gateway:
 		return []client.ObjectKey{client.ObjectKeyFromObject(targetNetworkObject)}
 
 	// If the targetNetworkObject is nil, we don't fail; instead, we return an empty slice of gateway keys.
@@ -198,7 +199,7 @@ func (r *TargetRefReconciler) ComputeGatewayDiffs(ctx context.Context, policy co
 	}
 
 	// TODO(rahulanand16nov): maybe think about optimizing it with a label later
-	allGwList := &gatewayapiv1alpha2.GatewayList{}
+	allGwList := &gatewayapiv1beta1.GatewayList{}
 	err := r.Client().List(ctx, allGwList)
 	if err != nil {
 		return nil, err

@@ -17,8 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayapiv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	gatewayapiv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	kuadrantv1beta1 "github.com/kuadrant/kuadrant-operator/api/v1beta1"
 )
@@ -153,17 +153,17 @@ var _ = Describe("AuthPolicy controller", func() {
 			err := k8sClient.Create(context.Background(), httpRoute)
 			Expect(err).ToNot(HaveOccurred())
 
-			typedNamespace := v1alpha2.Namespace(testNamespace)
+			typedNamespace := gatewayapiv1beta1.Namespace(testNamespace)
 			policy := &kuadrantv1beta1.AuthPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "toystore",
 					Namespace: testNamespace,
 				},
 				Spec: kuadrantv1beta1.AuthPolicySpec{
-					TargetRef: v1alpha2.PolicyTargetReference{
-						Group:     gatewayapiv1alpha2.Group(gatewayapiv1alpha2.GroupVersion.Group),
+					TargetRef: gatewayapiv1alpha2.PolicyTargetReference{
+						Group:     gatewayapiv1beta1.Group(gatewayapiv1beta1.GroupVersion.Group),
 						Kind:      "HTTPRoute",
-						Name:      gatewayapiv1alpha2.ObjectName(routeName),
+						Name:      gatewayapiv1beta1.ObjectName(routeName),
 						Namespace: &typedNamespace,
 					},
 					AuthRules: []kuadrantv1beta1.AuthRule{
@@ -213,11 +213,11 @@ var _ = Describe("AuthPolicy controller", func() {
 		})
 
 		It("Istio's authorizationpolicy should include network resource hostnames on kuadrant rules without hosts", func() {
-			typedNamespace := v1alpha2.Namespace(testNamespace)
-			targetRef := v1alpha2.PolicyTargetReference{
-				Group:     gatewayapiv1alpha2.Group(gatewayapiv1alpha2.GroupVersion.Group),
+			typedNamespace := gatewayapiv1beta1.Namespace(testNamespace)
+			targetRef := gatewayapiv1alpha2.PolicyTargetReference{
+				Group:     gatewayapiv1beta1.Group(gatewayapiv1beta1.GroupVersion.Group),
 				Kind:      "HTTPRoute",
-				Name:      gatewayapiv1alpha2.ObjectName(routeName),
+				Name:      gatewayapiv1beta1.ObjectName(routeName),
 				Namespace: &typedNamespace,
 			}
 
@@ -254,17 +254,17 @@ var _ = Describe("AuthPolicy controller", func() {
 			err := k8sClient.Create(context.Background(), httpRoute)
 			Expect(err).ToNot(HaveOccurred())
 
-			typedNamespace := v1alpha2.Namespace(testNamespace)
+			typedNamespace := gatewayapiv1beta1.Namespace(testNamespace)
 			policy := &kuadrantv1beta1.AuthPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "toystore",
 					Namespace: testNamespace,
 				},
 				Spec: kuadrantv1beta1.AuthPolicySpec{
-					TargetRef: v1alpha2.PolicyTargetReference{
-						Group:     gatewayapiv1alpha2.Group(gatewayapiv1alpha2.GroupVersion.Group),
+					TargetRef: gatewayapiv1alpha2.PolicyTargetReference{
+						Group:     gatewayapiv1beta1.Group(gatewayapiv1beta1.GroupVersion.Group),
 						Kind:      "HTTPRoute",
-						Name:      gatewayapiv1alpha2.ObjectName(routeName),
+						Name:      gatewayapiv1beta1.ObjectName(routeName),
 						Namespace: &typedNamespace,
 					},
 					AuthRules: []kuadrantv1beta1.AuthRule{
@@ -327,17 +327,17 @@ var _ = Describe("AuthPolicy controller", func() {
 			err := k8sClient.Create(context.Background(), httpRoute)
 			Expect(err).ToNot(HaveOccurred())
 
-			typedNamespace := v1alpha2.Namespace(testNamespace)
+			typedNamespace := gatewayapiv1beta1.Namespace(testNamespace)
 			policy := &kuadrantv1beta1.AuthPolicy{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "toystore",
 					Namespace: testNamespace,
 				},
 				Spec: kuadrantv1beta1.AuthPolicySpec{
-					TargetRef: v1alpha2.PolicyTargetReference{
-						Group:     gatewayapiv1alpha2.Group(gatewayapiv1alpha2.GroupVersion.Group),
+					TargetRef: gatewayapiv1alpha2.PolicyTargetReference{
+						Group:     gatewayapiv1beta1.Group(gatewayapiv1beta1.GroupVersion.Group),
 						Kind:      "HTTPRoute",
-						Name:      gatewayapiv1alpha2.ObjectName(routeName),
+						Name:      gatewayapiv1beta1.ObjectName(routeName),
 						Namespace: &typedNamespace,
 					},
 					AuthRules:  nil,
@@ -401,14 +401,14 @@ func testBasicAuthScheme() kuadrantv1beta1.AuthSchemeSpec {
 }
 
 func authPolicies(namespace string) []*kuadrantv1beta1.AuthPolicy {
-	typedNamespace := v1alpha2.Namespace(namespace)
+	typedNamespace := gatewayapiv1beta1.Namespace(namespace)
 	routePolicy := &kuadrantv1beta1.AuthPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "target-route",
 			Namespace: namespace,
 		},
 		Spec: kuadrantv1beta1.AuthPolicySpec{
-			TargetRef: v1alpha2.PolicyTargetReference{
+			TargetRef: gatewayapiv1alpha2.PolicyTargetReference{
 				Group:     "gateway.networking.k8s.io",
 				Kind:      "HTTPRoute",
 				Name:      "toystore",
