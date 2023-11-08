@@ -3,6 +3,7 @@
 resources:
 - bases/kuadrant-operator.clusterserviceversion.yaml
 - ../default
+- ./policy-controller
 - ../samples
 - ../scorecard
 
