@@ -1,0 +1,2 @@
+resources:
+- github.com/kuadrant/kuadrant-dns-operator/config/default?ref=${KUADRANT_DNS_OPERATOR_GITREF}
