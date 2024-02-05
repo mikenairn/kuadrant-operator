@@ -202,7 +202,7 @@ func main() {
 		mgr.GetEventRecorderFor("TLSPolicy"),
 	)
 
-	if err = (&controllers.DNSPolicyReconciler{
+	if err = (&controllers.TLSPolicyReconciler{
 		TargetRefReconciler: reconcilers.TargetRefReconciler{
 			BaseReconciler: tlsPolicyBaseReconciler,
 		},
