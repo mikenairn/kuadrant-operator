@@ -87,7 +87,7 @@ metadata:
     capabilities: Basic Install
     categories: Integration & Delivery
     containerImage: quay.io/kuadrant/kuadrant-operator:latest
-    createdAt: "2024-02-04T22:07:44Z"
+    createdAt: "2024-02-05T15:37:28Z"
     operators.operatorframework.io/builder: operator-sdk-v1.28.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/Kuadrant/kuadrant-operator
@@ -415,6 +415,14 @@ spec:
           - get
           - patch
           - update
+        - apiGroups:
+          - kuadrant.io
+          resources:
+          - managedzones
+          verbs:
+          - get
+          - list
+          - watch
         - apiGroups:
           - kuadrant.io
           resources:

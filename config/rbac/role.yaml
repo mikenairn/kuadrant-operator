@@ -285,6 +285,14 @@ rules:
 - apiGroups:
   - kuadrant.io
   resources:
+  - managedzones
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kuadrant.io
+  resources:
   - ratelimitpolicies
   verbs:
   - create
