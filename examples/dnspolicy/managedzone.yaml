@@ -1,0 +1,22 @@
+apiVersion: kuadrant.io/v1alpha1
+kind: ManagedZone
+metadata:
+  name: pb.hcpapps.net
+  namespace: gateway
+spec:
+  id: Z0490617QKSNPXXQRPII
+  domainName: pb.hcpapps.net
+  description: "pb.hcpapps.net managed domain"
+  dnsProviderSecretRef:
+    name: mgc-aws-credentials
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mgc-aws-credentials
+  namespace: gateway
+type: "kuadrant.io/aws"
+stringData:
+  AWS_ACCESS_KEY_ID: ${KUADRANT_AWS_ACCESS_KEY_ID}
+  AWS_SECRET_ACCESS_KEY: ${KUADRANT_AWS_SECRET_ACCESS_KEY}
+  AWS_REGION: ${KUADRANT_AWS_REGION}

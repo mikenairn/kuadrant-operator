@@ -17,19 +17,27 @@ limitations under the License.
 package common
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kuadrant/kuadrant-operator/pkg/multicluster"
 )
 
 const (
 	DeleteTagAnnotation = "kuadrant.io/delete"
+	clusterIDLength     = 7
+	clusterIDNamespace  = "kube-system"
 )
+
+var clusterID string = ""
 
 // ObjectInfo generates a string representation of the provided Kubernetes object, including its kind and name.
 // The generated string follows the format: "kind/name".
@@ -146,4 +154,19 @@ func GetLabel(obj metav1.Object, key string) string {
 		return ""
 	}
 	return obj.GetLabels()[key]
+}
+
+func GenerateClusterID(ctx context.Context, c client.Client) (error, string) {
+	//Already calculated? return it
+	if clusterID != "" {
+		return nil, clusterID
+	}
+
+	ns := &corev1.Namespace{}
+	err := c.Get(ctx, client.ObjectKey{Name: clusterIDNamespace}, ns)
+	if err != nil {
+		return err, ""
+	}
+	clusterID = multicluster.ToBase36HashLen(string(ns.UID), clusterIDLength)
+	return nil, clusterID
 }

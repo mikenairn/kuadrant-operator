@@ -36,7 +36,7 @@ func (t *GatewayTarget) GetName() string {
 }
 
 func (t *GatewayTarget) GetShortCode() string {
-	return ToBase36hash(t.GetName())
+	return ToBase36HashLen(t.GetName(), 7)
 }
 
 // GroupTargetsByGeo groups targets based on Geo Code.
@@ -111,7 +111,7 @@ func (t *ClusterGatewayTarget) GetName() string {
 }
 
 func (t *ClusterGatewayTarget) GetShortCode() string {
-	return ToBase36hash(t.GetName())
+	return fmt.Sprintf("%s-%s", t.ClusterName, ToBase36HashLen(t.Namespace+"-"+t.Name, 7))
 }
 
 func (t *ClusterGatewayTarget) setGeo(defaultGeo v1alpha1.GeoCode) {
@@ -144,10 +144,12 @@ func (t *ClusterGatewayTarget) setWeight(defaultWeight int, customWeights []*v1a
 	return nil
 }
 
-func ToBase36hash(s string) string {
+func ToBase36Hash(s string) string {
 	hash := sha256.Sum224([]byte(s))
 	// convert the hash to base36 (alphanumeric) to decrease collision probabilities
-	base36hash := strings.ToLower(base36.EncodeBytes(hash[:]))
-	// use 6 chars of the base36hash, should be enough to avoid collisions and keep the code short enough
-	return base36hash[:6]
+	return strings.ToLower(base36.EncodeBytes(hash[:]))
+}
+
+func ToBase36HashLen(s string, l int) string {
+	return ToBase36Hash(s)[:l]
 }
