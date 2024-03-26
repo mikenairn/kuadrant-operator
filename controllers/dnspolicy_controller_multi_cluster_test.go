@@ -19,28 +19,22 @@ import (
 	kuadrantdnsv1alpha1 "github.com/kuadrant/dns-operator/api/v1alpha1"
 
 	"github.com/kuadrant/kuadrant-operator/api/v1alpha1"
-	"github.com/kuadrant/kuadrant-operator/pkg/common"
 	"github.com/kuadrant/kuadrant-operator/pkg/multicluster"
 )
 
-var _ = Describe("DNSPolicy Multi Cluster", func() {
+var _ = FDescribe("DNSPolicy Multi Cluster", func() {
 
 	var gatewayClass *gatewayapiv1.GatewayClass
 	var managedZone *kuadrantdnsv1alpha1.ManagedZone
 	var testNamespace string
 	var gateway *gatewayapiv1.Gateway
-	var cgwTarget *multicluster.ClusterGatewayTarget
 	var dnsPolicy *v1alpha1.DNSPolicy
-	var clusterID, lbHash, recordName, wildcardRecordName string
+	var cluster1Hash, cluster2Hash, recordName, wildcardRecordName string
 	var ctx context.Context
 
 	BeforeEach(func() {
 		ctx = context.Background()
 		CreateNamespace(&testNamespace)
-
-		var err error
-		err, clusterID = common.GenerateClusterID(ctx, k8sClient)
-		Expect(err).To(BeNil())
 
 		gatewayClass = testBuildGatewayClass("foo", "default", "kuadrant.io/bar")
 		Expect(k8sClient.Create(ctx, gatewayClass)).To(Succeed())
@@ -53,9 +47,6 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 			WithHTTPListener(TestListenerNameWildcard, TestHostWildcard).
 			Gateway
 		Expect(k8sClient.Create(ctx, gateway)).To(Succeed())
-
-		cgw := multicluster.ClusterGateway{ClusterName: clusterID, Gateway: *gateway}
-		cgwTarget = &multicluster.ClusterGatewayTarget{ClusterGateway: &cgw}
 
 		//Set multi cluster gateway status
 		Eventually(func() error {
@@ -98,7 +89,8 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 			return k8sClient.Status().Update(ctx, gateway)
 		}, TestTimeoutMedium, TestRetryIntervalMedium).ShouldNot(HaveOccurred())
 
-		lbHash = "klb"
+		cluster1Hash = multicluster.ToBase36hash(fmt.Sprintf("%s-%s-%s", TestClusterNameOne, gateway.Name, gateway.Namespace))
+		cluster2Hash = multicluster.ToBase36hash(fmt.Sprintf("%s-%s-%s", TestClusterNameTwo, gateway.Name, gateway.Namespace))
 		recordName = fmt.Sprintf("%s-%s", TestGatewayName, TestListenerNameOne)
 		wildcardRecordName = fmt.Sprintf("%s-%s", TestGatewayName, TestListenerNameWildcard)
 	})
@@ -203,38 +195,38 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 									"ManagedZoneRef": HaveField("Name", "mz-example-com"),
 									"Endpoints": ConsistOf(
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":       Equal(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"DNSName":       Equal(cluster2Hash + ".klb.test.example.com"),
 											"Targets":       ConsistOf(TestIPAddressTwo),
 											"RecordType":    Equal("A"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(60)),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal("default." + lbHash + ".test.example.com"),
-											"Targets":          ConsistOf(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"DNSName":          Equal("default.klb.test.example.com"),
+											"Targets":          ConsistOf(cluster2Hash + ".klb.test.example.com"),
 											"RecordType":       Equal("CNAME"),
-											"SetIdentifier":    Equal(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"SetIdentifier":    Equal(cluster2Hash + ".klb.test.example.com"),
 											"RecordTTL":        Equal(externaldns.TTL(60)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "weight", Value: "120"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal("default." + lbHash + ".test.example.com"),
-											"Targets":          ConsistOf(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"DNSName":          Equal("default.klb.test.example.com"),
+											"Targets":          ConsistOf(cluster1Hash + ".klb.test.example.com"),
 											"RecordType":       Equal("CNAME"),
-											"SetIdentifier":    Equal(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"SetIdentifier":    Equal(cluster1Hash + ".klb.test.example.com"),
 											"RecordTTL":        Equal(externaldns.TTL(60)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "weight", Value: "120"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":       Equal(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"DNSName":       Equal(cluster1Hash + ".klb.test.example.com"),
 											"Targets":       ConsistOf(TestIPAddressOne),
 											"RecordType":    Equal("A"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(60)),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal(lbHash + ".test.example.com"),
-											"Targets":          ConsistOf("default." + lbHash + ".test.example.com"),
+											"DNSName":          Equal("klb.test.example.com"),
+											"Targets":          ConsistOf("default.klb.test.example.com"),
 											"RecordType":       Equal("CNAME"),
 											"SetIdentifier":    Equal("default"),
 											"RecordTTL":        Equal(externaldns.TTL(300)),
@@ -242,7 +234,7 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
 											"DNSName":       Equal(TestHostOne),
-											"Targets":       ConsistOf(lbHash + ".test.example.com"),
+											"Targets":       ConsistOf("klb.test.example.com"),
 											"RecordType":    Equal("CNAME"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(300)),
@@ -256,38 +248,38 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 									"ManagedZoneRef": HaveField("Name", "mz-example-com"),
 									"Endpoints": ConsistOf(
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":       Equal(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"DNSName":       Equal(cluster2Hash + ".klb.example.com"),
 											"Targets":       ConsistOf(TestIPAddressTwo),
 											"RecordType":    Equal("A"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(60)),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal("default." + lbHash + ".example.com"),
-											"Targets":          ConsistOf(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"DNSName":          Equal("default.klb.example.com"),
+											"Targets":          ConsistOf(cluster2Hash + ".klb.example.com"),
 											"RecordType":       Equal("CNAME"),
-											"SetIdentifier":    Equal(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"SetIdentifier":    Equal(cluster2Hash + ".klb.example.com"),
 											"RecordTTL":        Equal(externaldns.TTL(60)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "weight", Value: "120"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal("default." + lbHash + ".example.com"),
-											"Targets":          ConsistOf(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"DNSName":          Equal("default.klb.example.com"),
+											"Targets":          ConsistOf(cluster1Hash + ".klb.example.com"),
 											"RecordType":       Equal("CNAME"),
-											"SetIdentifier":    Equal(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"SetIdentifier":    Equal(cluster1Hash + ".klb.example.com"),
 											"RecordTTL":        Equal(externaldns.TTL(60)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "weight", Value: "120"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":       Equal(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"DNSName":       Equal(cluster1Hash + ".klb.example.com"),
 											"Targets":       ConsistOf(TestIPAddressOne),
 											"RecordType":    Equal("A"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(60)),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal(lbHash + ".example.com"),
-											"Targets":          ConsistOf("default." + lbHash + ".example.com"),
+											"DNSName":          Equal("klb.example.com"),
+											"Targets":          ConsistOf("default.klb.example.com"),
 											"RecordType":       Equal("CNAME"),
 											"SetIdentifier":    Equal("default"),
 											"RecordTTL":        Equal(externaldns.TTL(300)),
@@ -295,7 +287,7 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
 											"DNSName":       Equal(TestHostWildcard),
-											"Targets":       ConsistOf(lbHash + ".example.com"),
+											"Targets":       ConsistOf("klb.example.com"),
 											"RecordType":    Equal("CNAME"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(300)),
@@ -334,46 +326,46 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 									"ManagedZoneRef": HaveField("Name", "mz-example-com"),
 									"Endpoints": ConsistOf(
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":       Equal(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"DNSName":       Equal(cluster2Hash + ".klb.test.example.com"),
 											"Targets":       ConsistOf(TestIPAddressTwo),
 											"RecordType":    Equal("A"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(60)),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal("ie." + lbHash + ".test.example.com"),
-											"Targets":          ConsistOf(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"DNSName":          Equal("ie.klb.test.example.com"),
+											"Targets":          ConsistOf(cluster2Hash + ".klb.test.example.com"),
 											"RecordType":       Equal("CNAME"),
-											"SetIdentifier":    Equal(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"SetIdentifier":    Equal(cluster2Hash + ".klb.test.example.com"),
 											"RecordTTL":        Equal(externaldns.TTL(60)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "weight", Value: "120"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal("ie." + lbHash + ".test.example.com"),
-											"Targets":          ConsistOf(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"DNSName":          Equal("ie.klb.test.example.com"),
+											"Targets":          ConsistOf(cluster1Hash + ".klb.test.example.com"),
 											"RecordType":       Equal("CNAME"),
-											"SetIdentifier":    Equal(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"SetIdentifier":    Equal(cluster1Hash + ".klb.test.example.com"),
 											"RecordTTL":        Equal(externaldns.TTL(60)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "weight", Value: "120"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":       Equal(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"DNSName":       Equal(cluster1Hash + ".klb.test.example.com"),
 											"Targets":       ConsistOf(TestIPAddressOne),
 											"RecordType":    Equal("A"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(60)),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal(lbHash + ".test.example.com"),
-											"Targets":          ConsistOf("ie." + lbHash + ".test.example.com"),
+											"DNSName":          Equal("klb.test.example.com"),
+											"Targets":          ConsistOf("ie.klb.test.example.com"),
 											"RecordType":       Equal("CNAME"),
 											"SetIdentifier":    Equal("IE"),
 											"RecordTTL":        Equal(externaldns.TTL(300)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "geo-code", Value: "IE"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal(lbHash + ".test.example.com"),
-											"Targets":          ConsistOf("ie." + lbHash + ".test.example.com"),
+											"DNSName":          Equal("klb.test.example.com"),
+											"Targets":          ConsistOf("ie.klb.test.example.com"),
 											"RecordType":       Equal("CNAME"),
 											"SetIdentifier":    Equal("default"),
 											"RecordTTL":        Equal(externaldns.TTL(300)),
@@ -381,7 +373,7 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
 											"DNSName":       Equal(TestHostOne),
-											"Targets":       ConsistOf(lbHash + ".test.example.com"),
+											"Targets":       ConsistOf("klb.test.example.com"),
 											"RecordType":    Equal("CNAME"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(300)),
@@ -395,46 +387,46 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 									"ManagedZoneRef": HaveField("Name", "mz-example-com"),
 									"Endpoints": ConsistOf(
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":       Equal(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"DNSName":       Equal(cluster2Hash + ".klb.example.com"),
 											"Targets":       ConsistOf(TestIPAddressTwo),
 											"RecordType":    Equal("A"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(60)),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal("ie." + lbHash + ".example.com"),
-											"Targets":          ConsistOf(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"DNSName":          Equal("ie.klb.example.com"),
+											"Targets":          ConsistOf(cluster2Hash + ".klb.example.com"),
 											"RecordType":       Equal("CNAME"),
-											"SetIdentifier":    Equal(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"SetIdentifier":    Equal(cluster2Hash + ".klb.example.com"),
 											"RecordTTL":        Equal(externaldns.TTL(60)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "weight", Value: "120"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal("ie." + lbHash + ".example.com"),
-											"Targets":          ConsistOf(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"DNSName":          Equal("ie.klb.example.com"),
+											"Targets":          ConsistOf(cluster1Hash + ".klb.example.com"),
 											"RecordType":       Equal("CNAME"),
-											"SetIdentifier":    Equal(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"SetIdentifier":    Equal(cluster1Hash + ".klb.example.com"),
 											"RecordTTL":        Equal(externaldns.TTL(60)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "weight", Value: "120"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":       Equal(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"DNSName":       Equal(cluster1Hash + ".klb.example.com"),
 											"Targets":       ConsistOf(TestIPAddressOne),
 											"RecordType":    Equal("A"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(60)),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal(lbHash + ".example.com"),
-											"Targets":          ConsistOf("ie." + lbHash + ".example.com"),
+											"DNSName":          Equal("klb.example.com"),
+											"Targets":          ConsistOf("ie.klb.example.com"),
 											"RecordType":       Equal("CNAME"),
 											"SetIdentifier":    Equal("IE"),
 											"RecordTTL":        Equal(externaldns.TTL(300)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "geo-code", Value: "IE"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal(lbHash + ".example.com"),
-											"Targets":          ConsistOf("ie." + lbHash + ".example.com"),
+											"DNSName":          Equal("klb.example.com"),
+											"Targets":          ConsistOf("ie.klb.example.com"),
 											"RecordType":       Equal("CNAME"),
 											"SetIdentifier":    Equal("default"),
 											"RecordTTL":        Equal(externaldns.TTL(300)),
@@ -442,7 +434,7 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
 											"DNSName":       Equal(TestHostWildcard),
-											"Targets":       ConsistOf(lbHash + ".example.com"),
+											"Targets":       ConsistOf("klb.example.com"),
 											"RecordType":    Equal("CNAME"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(300)),
@@ -513,54 +505,54 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 									"ManagedZoneRef": HaveField("Name", "mz-example-com"),
 									"Endpoints": ConsistOf(
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":       Equal(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"DNSName":       Equal(cluster2Hash + ".klb.test.example.com"),
 											"Targets":       ConsistOf(TestIPAddressTwo),
 											"RecordType":    Equal("A"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(60)),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal("es." + lbHash + ".test.example.com"),
-											"Targets":          ConsistOf(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"DNSName":          Equal("es.klb.test.example.com"),
+											"Targets":          ConsistOf(cluster2Hash + ".klb.test.example.com"),
 											"RecordType":       Equal("CNAME"),
-											"SetIdentifier":    Equal(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"SetIdentifier":    Equal(cluster2Hash + ".klb.test.example.com"),
 											"RecordTTL":        Equal(externaldns.TTL(60)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "weight", Value: "160"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal("ie." + lbHash + ".test.example.com"),
-											"Targets":          ConsistOf(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"DNSName":          Equal("ie.klb.test.example.com"),
+											"Targets":          ConsistOf(cluster1Hash + ".klb.test.example.com"),
 											"RecordType":       Equal("CNAME"),
-											"SetIdentifier":    Equal(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"SetIdentifier":    Equal(cluster1Hash + ".klb.test.example.com"),
 											"RecordTTL":        Equal(externaldns.TTL(60)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "weight", Value: "100"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":       Equal(cgwTarget.GetShortCode() + "." + lbHash + ".test.example.com"),
+											"DNSName":       Equal(cluster1Hash + ".klb.test.example.com"),
 											"Targets":       ConsistOf(TestIPAddressOne),
 											"RecordType":    Equal("A"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(60)),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal(lbHash + ".test.example.com"),
-											"Targets":          ConsistOf("es." + lbHash + ".test.example.com"),
+											"DNSName":          Equal("klb.test.example.com"),
+											"Targets":          ConsistOf("es.klb.test.example.com"),
 											"RecordType":       Equal("CNAME"),
 											"SetIdentifier":    Equal("ES"),
 											"RecordTTL":        Equal(externaldns.TTL(300)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "geo-code", Value: "ES"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal(lbHash + ".test.example.com"),
-											"Targets":          ConsistOf("ie." + lbHash + ".test.example.com"),
+											"DNSName":          Equal("klb.test.example.com"),
+											"Targets":          ConsistOf("ie.klb.test.example.com"),
 											"RecordType":       Equal("CNAME"),
 											"SetIdentifier":    Equal("IE"),
 											"RecordTTL":        Equal(externaldns.TTL(300)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "geo-code", Value: "IE"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal(lbHash + ".test.example.com"),
-											"Targets":          ConsistOf("ie." + lbHash + ".test.example.com"),
+											"DNSName":          Equal("klb.test.example.com"),
+											"Targets":          ConsistOf("ie.klb.test.example.com"),
 											"RecordType":       Equal("CNAME"),
 											"SetIdentifier":    Equal("default"),
 											"RecordTTL":        Equal(externaldns.TTL(300)),
@@ -568,7 +560,7 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
 											"DNSName":       Equal(TestHostOne),
-											"Targets":       ConsistOf(lbHash + ".test.example.com"),
+											"Targets":       ConsistOf("klb.test.example.com"),
 											"RecordType":    Equal("CNAME"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(300)),
@@ -582,54 +574,54 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 									"ManagedZoneRef": HaveField("Name", "mz-example-com"),
 									"Endpoints": ConsistOf(
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":       Equal(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"DNSName":       Equal(cluster2Hash + ".klb.example.com"),
 											"Targets":       ConsistOf(TestIPAddressTwo),
 											"RecordType":    Equal("A"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(60)),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal("es." + lbHash + ".example.com"),
-											"Targets":          ConsistOf(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"DNSName":          Equal("es.klb.example.com"),
+											"Targets":          ConsistOf(cluster2Hash + ".klb.example.com"),
 											"RecordType":       Equal("CNAME"),
-											"SetIdentifier":    Equal(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"SetIdentifier":    Equal(cluster2Hash + ".klb.example.com"),
 											"RecordTTL":        Equal(externaldns.TTL(60)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "weight", Value: "160"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal("ie." + lbHash + ".example.com"),
-											"Targets":          ConsistOf(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"DNSName":          Equal("ie.klb.example.com"),
+											"Targets":          ConsistOf(cluster1Hash + ".klb.example.com"),
 											"RecordType":       Equal("CNAME"),
-											"SetIdentifier":    Equal(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"SetIdentifier":    Equal(cluster1Hash + ".klb.example.com"),
 											"RecordTTL":        Equal(externaldns.TTL(60)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "weight", Value: "100"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":       Equal(cgwTarget.GetShortCode() + "." + lbHash + ".example.com"),
+											"DNSName":       Equal(cluster1Hash + ".klb.example.com"),
 											"Targets":       ConsistOf(TestIPAddressOne),
 											"RecordType":    Equal("A"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(60)),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal(lbHash + ".example.com"),
-											"Targets":          ConsistOf("ie." + lbHash + ".example.com"),
+											"DNSName":          Equal("klb.example.com"),
+											"Targets":          ConsistOf("ie.klb.example.com"),
 											"RecordType":       Equal("CNAME"),
 											"SetIdentifier":    Equal("IE"),
 											"RecordTTL":        Equal(externaldns.TTL(300)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "geo-code", Value: "IE"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal(lbHash + ".example.com"),
-											"Targets":          ConsistOf("es." + lbHash + ".example.com"),
+											"DNSName":          Equal("klb.example.com"),
+											"Targets":          ConsistOf("es.klb.example.com"),
 											"RecordType":       Equal("CNAME"),
 											"SetIdentifier":    Equal("ES"),
 											"RecordTTL":        Equal(externaldns.TTL(300)),
 											"ProviderSpecific": Equal(externaldns.ProviderSpecific{{Name: "geo-code", Value: "ES"}}),
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
-											"DNSName":          Equal(lbHash + ".example.com"),
-											"Targets":          ConsistOf("ie." + lbHash + ".example.com"),
+											"DNSName":          Equal("klb.example.com"),
+											"Targets":          ConsistOf("ie.klb.example.com"),
 											"RecordType":       Equal("CNAME"),
 											"SetIdentifier":    Equal("default"),
 											"RecordTTL":        Equal(externaldns.TTL(300)),
@@ -637,7 +629,7 @@ var _ = Describe("DNSPolicy Multi Cluster", func() {
 										})),
 										PointTo(MatchFields(IgnoreExtras, Fields{
 											"DNSName":       Equal(TestHostWildcard),
-											"Targets":       ConsistOf(lbHash + ".example.com"),
+											"Targets":       ConsistOf("klb.example.com"),
 											"RecordType":    Equal("CNAME"),
 											"SetIdentifier": Equal(""),
 											"RecordTTL":     Equal(externaldns.TTL(300)),

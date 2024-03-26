@@ -174,7 +174,7 @@ func (g *GatewayWrapper) GetClusterGateways() []ClusterGateway {
 		}
 		clusterGateways = append(clusterGateways, ClusterGateway{
 			Gateway:     gw,
-			ClusterName: g.ClusterID,
+			ClusterName: clusterName,
 		})
 	}
 	return clusterGateways

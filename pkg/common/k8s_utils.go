@@ -27,8 +27,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/kuadrant/kuadrant-operator/pkg/multicluster"
 )
 
 const (
@@ -167,6 +165,6 @@ func GenerateClusterID(ctx context.Context, c client.Client) (error, string) {
 	if err != nil {
 		return err, ""
 	}
-	clusterID = multicluster.ToBase36HashLen(string(ns.UID), clusterIDLength)
+	clusterID = string(ns.UID)
 	return nil, clusterID
 }
