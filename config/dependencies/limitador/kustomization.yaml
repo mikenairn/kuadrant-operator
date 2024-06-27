@@ -1,2 +1,5 @@
 resources:
 - github.com/Kuadrant/limitador-operator/config/default?ref=main
+
+patchesStrategicMerge:
+  - delete-ns.yaml

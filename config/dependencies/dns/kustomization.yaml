@@ -1,6 +1,9 @@
 resources:
 - github.com/kuadrant/dns-operator/config/default?ref=main
 
+patchesStrategicMerge:
+  - delete-ns.yaml
+
 patches:
   - path: deployment_patch.yaml
     target:

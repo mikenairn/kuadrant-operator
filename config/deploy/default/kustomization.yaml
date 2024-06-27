@@ -1,0 +1,6 @@
+
+resources:
+  - ../../dependencies/gateway-api
+  - ../../dependencies/istio
+  - ../../dependencies/cert-manager
+  - ./kuadrant-system

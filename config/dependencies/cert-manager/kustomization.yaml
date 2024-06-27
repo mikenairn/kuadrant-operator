@@ -1,2 +1,8 @@
 resources:
 - https://github.com/cert-manager/cert-manager/releases/download/v1.12.1/cert-manager.yaml
+
+patches:
+  - path: deployment_patch.yaml
+    target:
+      kind: Deployment
+      name: cert-manager

@@ -1,0 +1,12 @@
+namespace: kuadrant-system
+
+resources:
+  - ../../../dependencies/authorino
+  - ../../../dependencies/limitador
+  - ../../../dependencies/dns
+  - ../../../default
+
+labels:
+  - pairs:
+      "app.kubernetes.io/part-of": "kuadrant"
+    includeTemplates: true
