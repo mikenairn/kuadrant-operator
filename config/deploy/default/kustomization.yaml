@@ -1,5 +1,6 @@
 
 resources:
+  - ../../metrics-server
   - ../../dependencies/gateway-api
   - ../../dependencies/istio
   - ../../dependencies/cert-manager
