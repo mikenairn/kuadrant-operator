@@ -251,28 +251,8 @@ stringData:
   AWS_ACCESS_KEY_ID: ${KUADRANT_AWS_ACCESS_KEY_ID}
   AWS_SECRET_ACCESS_KEY: ${KUADRANT_AWS_SECRET_ACCESS_KEY}
   AWS_REGION: ${KUADRANT_AWS_REGION}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ${KIND_CLUSTER_PREFIX}controller-config
-  namespace: ${namespace}
-data:
-  AWS_DNS_PUBLIC_ZONE_ID: ${KUADRANT_AWS_DNS_PUBLIC_ZONE_ID}
-  ZONE_ROOT_DOMAIN: ${KUADRANT_ZONE_ROOT_DOMAIN}
-  LOG_LEVEL: "${LOG_LEVEL}"
----
-apiVersion: kuadrant.io/v1alpha1
-kind: ManagedZone
-metadata:
-  name: ${KIND_CLUSTER_PREFIX}dev-mz
-  namespace: ${namespace}
-spec:
-  id: ${KUADRANT_AWS_DNS_PUBLIC_ZONE_ID}
-  domainName: ${KUADRANT_ZONE_ROOT_DOMAIN}
-  description: "Dev Managed Zone"
-  dnsProviderSecretRef:
-    name: ${KIND_CLUSTER_PREFIX}aws-credentials
+  ZONE_ID_FILTER: ${KUADRANT_AWS_DNS_PUBLIC_ZONE_ID}
+  ZONE_DOMAIN_FILTER: ${KUADRANT_ZONE_ROOT_DOMAIN}
 EOF
 }
 
@@ -291,28 +271,8 @@ type: "kuadrant.io/gcp"
 stringData:
   GOOGLE: '${GOOGLE}'
   PROJECT_ID: ${PROJECT_ID}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ${KIND_CLUSTER_PREFIX}controller-config
-  namespace: ${namespace}
-data:
-  ZONE_DNS_NAME: ${ZONE_DNS_NAME}
-  ZONE_NAME: ${ZONE_NAME}
-  LOG_LEVEL: "${LOG_LEVEL}"
----
-apiVersion: kuadrant.io/v1alpha1
-kind: ManagedZone
-metadata:
-  name: ${KIND_CLUSTER_PREFIX}dev-mz
-  namespace: ${namespace}
-spec:
-  id: ${ZONE_NAME}
-  domainName: ${ZONE_DNS_NAME}
-  description: "Dev Managed Zone"
-  dnsProviderSecretRef:
-    name: ${KIND_CLUSTER_PREFIX}gcp-credentials
+  ZONE_ID_FILTER: ${ZONE_NAME}
+  ZONE_DOMAIN_FILTER: ${ZONE_DNS_NAME}
 EOF
 }
 
@@ -497,7 +457,7 @@ info "Installing Kuadrant in ${KUADRANT_CLUSTER_NAME}..."
   kubectl apply -k ${KUADRANT_DEPLOY_KUSTOMIZATION} --server-side --validate=false 2>&1
 } | grep -v "Warning: .* deprecated" || true
 
-info "Kuadrant installation applied, configuring ManagedZone if DNS provider is set..."
+info "Kuadrant installation applied, configuring DNS provider if set..."
 if [ ! -z "$DNS_PROVIDER" ]; then
   postSetup ${KUADRANT_CLUSTER_NAME} ${KUADRANT_NAMESPACE}
 fi

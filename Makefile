@@ -47,7 +47,8 @@ is_semantic_version = $(shell [[ $(1) =~ ^[0-9]+\.[0-9]+\.[0-9]+(-.+)?$$ ]] && e
 bundle_is_semantic := $(call is_semantic_version,$(VERSION))
 ifeq (0.0.0,$(VERSION))
 BUNDLE_VERSION = $(VERSION)
-IMAGE_TAG = latest
+# ToDo mnairn: revert before merge
+IMAGE_TAG = remove_managed_zone_api
 else ifeq ($(bundle_is_semantic),true)
 BUNDLE_VERSION = $(VERSION)
 IMAGE_TAG = v$(VERSION)
@@ -140,7 +141,8 @@ endif
 LIMITADOR_OPERATOR_BUNDLE_IMG ?= quay.io/kuadrant/limitador-operator-bundle:$(LIMITADOR_OPERATOR_BUNDLE_IMG_TAG)
 
 ## dns
-DNS_OPERATOR_VERSION ?= main
+# ToDo mnairn: revert before merge
+DNS_OPERATOR_VERSION ?= remove_managed_zone_api
 
 kuadrantdns_bundle_is_semantic := $(call is_semantic_version,$(DNS_OPERATOR_VERSION))
 ifeq (latest,$(DNS_OPERATOR_VERSION))
