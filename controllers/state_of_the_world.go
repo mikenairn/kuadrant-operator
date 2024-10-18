@@ -312,6 +312,7 @@ func (b *BootOptionsBuilder) getDNSOperatorOptions() []controller.ControllerOpti
 		),
 		controller.WithObjectLinks(
 			LinkListenerToDNSRecord,
+			LinkDNSPolicyToDNSRecord,
 		),
 	)
 
