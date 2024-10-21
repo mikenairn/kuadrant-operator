@@ -202,20 +202,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	dnsPolicyBaseReconciler := reconcilers.NewBaseReconciler(
-		mgr.GetClient(), mgr.GetScheme(), mgr.GetAPIReader(),
-		log.Log.WithName("dnspolicy"),
-		mgr.GetEventRecorderFor("DNSPolicy"),
-	)
-
-	if err = (&controllers.DNSPolicyReconciler{
-		BaseReconciler:      dnsPolicyBaseReconciler,
-		TargetRefReconciler: reconcilers.TargetRefReconciler{Client: mgr.GetClient()},
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "DNSPolicy")
-		os.Exit(1)
-	}
-
 	limitadorClusterEnvoyFilterBaseReconciler := reconcilers.NewBaseReconciler(
 		mgr.GetClient(), mgr.GetScheme(), mgr.GetAPIReader(),
 		log.Log.WithName("ratelimitpolicy").WithName("envoyfilter"),
