@@ -1,0 +1,11 @@
+resources:
+  - echo-app-istio.yaml
+  - gateway_prod-web-istio.yaml
+  - tlspolicy/issuer-self-signed.yaml
+  - tlspolicy/issuer-route53.yaml
+  - dns-providers
+
+labels:
+  - pairs:
+      kuadrant.io/test-suite: manual
+    includeTemplates: true
