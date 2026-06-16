@@ -37,3 +37,6 @@ vendor
 
 # Helm chart packages
 *operator*.tgz*
+
+# Build/scan output
+_output/
