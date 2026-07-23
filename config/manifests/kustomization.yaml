@@ -3,7 +3,7 @@
 resources:
 - bases/kuadrant-operator.clusterserviceversion.yaml
 - ../default
-- ../dependencies/developer-portal  # CRDs and ClusterRole deployed alongside (not owned)
+- ../dependencies  # Child operators and developer-portal (CRDs, RBAC, Deployments)
 - ../samples
 - ../scorecard
 - ../../cmd/extensions/plan-policy/config/samples

@@ -123,7 +123,6 @@ k8s-env-setup: ## Install Kuadrant CRDs and dependencies.
 	$(MAKE) install-observability-crds
 	$(MAKE) install-metallb
 	$(MAKE) install-cert-manager
-	$(MAKE) deploy-dependencies
 	$(MAKE) install
 
 .PHONY: local-k8s-env-setup

@@ -10,7 +10,7 @@ labels:
 
 resources:
 - ../default
-- developer-portal
+- ../dependencies
 
 patches:
 - patch: |-
@@ -19,3 +19,17 @@ patches:
     kind: Namespace
     metadata:
       name: kuadrant-system
+- patch: |-
+    - op: replace
+      path: /subjects/0/name
+      value: developer-portal-controller-manager
+  target:
+    kind: ClusterRoleBinding
+    name: developer-portal-.*
+- patch: |-
+    - op: replace
+      path: /subjects/0/name
+      value: developer-portal-controller-manager
+  target:
+    kind: RoleBinding
+    name: developer-portal-.*

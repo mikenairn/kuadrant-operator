@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- github.com/Kuadrant/mcp-gateway/config/crd?ref=main
+
+components:
+- github.com/Kuadrant/mcp-gateway/config/mcp-gateway/components/controller?ref=main

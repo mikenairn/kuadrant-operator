@@ -4,6 +4,7 @@ resources:
   - authorino
   - limitador
   - dns
+  - mcp-gateway
   - developer-portal
 
 patchesStrategicMerge:

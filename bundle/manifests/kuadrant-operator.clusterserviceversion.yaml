@@ -224,14 +224,14 @@ metadata:
     capabilities: Basic Install
     categories: Integration & Delivery
     console.openshift.io/plugins: '["kuadrant-console-plugin"]'
-    containerImage: quay.io/kuadrant/kuadrant-operator:latest
-    createdAt: "2026-06-22T15:16:38Z"
+    containerImage: quay.io/kuadrant/kuadrant-operator:olmv1-static-poc
+    createdAt: "2026-07-22T20:48:50Z"
     description: A Kubernetes Operator to manage the lifecycle of the Kuadrant system
     operators.operatorframework.io/builder: operator-sdk-v1.33.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
     repository: https://github.com/Kuadrant/kuadrant-operator
     support: kuadrant
-  name: kuadrant-operator.v0.0.0
+  name: kuadrant-operator.v0.0.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -249,24 +249,57 @@ spec:
     - kind: APIProduct
       name: apiproducts.devportal.kuadrant.io
       version: v1alpha1
+    - kind: AuthConfig
+      name: authconfigs.authorino.kuadrant.io
+      version: v1beta3
+    - kind: Authorino
+      name: authorinos.operator.authorino.kuadrant.io
+      version: v1beta1
     - description: AuthPolicy enables authentication and authorization for service
         workloads in a Gateway API network
       displayName: AuthPolicy
       kind: AuthPolicy
       name: authpolicies.kuadrant.io
       version: v1
+    - kind: DNSHealthCheckProbe
+      name: dnshealthcheckprobes.kuadrant.io
+      version: v1alpha1
     - description: DNSPolicy configures how North-South based traffic should be balanced
         and reach the gateways
       displayName: DNSPolicy
       kind: DNSPolicy
       name: dnspolicies.kuadrant.io
       version: v1
+    - kind: DNSRecord
+      name: dnsrecords.kuadrant.io
+      version: v1alpha1
     - description: Kuadrant configures installations of Kuadrant Service Protection
         components
       displayName: Kuadrant
       kind: Kuadrant
       name: kuadrants.kuadrant.io
       version: v1beta1
+    - kind: Limitador
+      name: limitadors.limitador.kuadrant.io
+      version: v1alpha1
+    - kind: MCPGatewayExtension
+      name: mcpgatewayextensions.mcp.kuadrant.io
+      version: v1
+    - kind: MCPGatewayExtension
+      name: mcpgatewayextensions.mcp.kuadrant.io
+      version: v1alpha1
+    - kind: MCPServerRegistration
+      name: mcpserverregistrations.mcp.kuadrant.io
+      version: v1
+    - kind: MCPServerRegistration
+      name: mcpserverregistrations.mcp.kuadrant.io
+      version: v1alpha1
+    - kind: MCPVirtualServer
+      name: mcpvirtualservers.mcp.kuadrant.io
+      version: v1
+    - kind: MCPVirtualServer
+      name: mcpvirtualservers.mcp.kuadrant.io
+      version: v1alpha1
     - kind: OIDCPolicy
       name: oidcpolicies.extensions.kuadrant.io
       version: v1alpha1
@@ -299,6 +332,149 @@ spec:
   install:
     spec:
       clusterPermissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - serviceaccounts
+          - services
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps/status
+          verbs:
+          - delete
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        - apiGroups:
+          - ""
+          resources:
+          - secrets
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorino.kuadrant.io
+          resources:
+          - authconfigs
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - authorino.kuadrant.io
+          resources:
+          - authconfigs/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - create
+          - get
+          - list
+          - update
+        - apiGroups:
+          - operator.authorino.kuadrant.io
+          resources:
+          - authorinos
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - operator.authorino.kuadrant.io
+          resources:
+          - authorinos/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - operator.authorino.kuadrant.io
+          resources:
+          - authorinos/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - clusterrolebindings
+          - rolebindings
+          - roles
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - clusterroles
+          verbs:
+          - create
+          - get
+          - list
+          - update
+          - watch
+        serviceAccountName: authorino-operator
       - rules:
         - apiGroups:
           - ""
@@ -393,6 +569,46 @@ spec:
           verbs:
           - get
         serviceAccountName: developer-portal-controller-manager
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - namespaces
+          - secrets
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - kuadrant.io
+          resources:
+          - dnshealthcheckprobes
+          - dnsrecords
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - kuadrant.io
+          resources:
+          - dnshealthcheckprobes/finalizers
+          - dnsrecords/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - kuadrant.io
+          resources:
+          - dnshealthcheckprobes/status
+          - dnsrecords/status
+          verbs:
+          - get
+          - patch
+          - update
+        serviceAccountName: dns-operator-controller-manager
       - rules:
         - apiGroups:
           - ""
@@ -729,7 +945,323 @@ spec:
           - update
           - watch
         serviceAccountName: kuadrant-operator-controller-manager
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - persistentvolumeclaims
+          - secrets
+          - services
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          verbs:
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - limitador.kuadrant.io
+          resources:
+          - limitadors
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - limitador.kuadrant.io
+          resources:
+          - limitadors/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - limitador.kuadrant.io
+          resources:
+          - limitadors/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - policy
+          resources:
+          - poddisruptionbudgets
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        serviceAccountName: limitador-operator-controller-manager
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - namespaces
+          verbs:
+          - get
+        - apiGroups:
+          - ""
+          resources:
+          - secrets
+          - serviceaccounts
+          - services
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - gateways
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - gateways/status
+          verbs:
+          - get
+          - update
+        - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - httproutes
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - httproutes/status
+          verbs:
+          - update
+        - apiGroups:
+          - gateway.networking.k8s.io
+          resources:
+          - referencegrants
+          verbs:
+          - list
+          - watch
+        - apiGroups:
+          - mcp.kuadrant.io
+          resources:
+          - mcpgatewayextensions
+          - mcpserverregistrations
+          - mcpvirtualservers
+          verbs:
+          - get
+          - list
+          - update
+          - watch
+        - apiGroups:
+          - mcp.kuadrant.io
+          resources:
+          - mcpgatewayextensions/finalizers
+          - mcpvirtualservers/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - mcp.kuadrant.io
+          resources:
+          - mcpgatewayextensions/status
+          - mcpserverregistrations/status
+          - mcpvirtualservers/status
+          verbs:
+          - get
+          - update
+        - apiGroups:
+          - networking.istio.io
+          resources:
+          - envoyfilters
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - update
+          - watch
+        serviceAccountName: mcp-controller
       deployments:
+      - label:
+          control-plane: authorino-operator
+        name: authorino-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              control-plane: authorino-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                control-plane: authorino-operator
+            spec:
+              containers:
+              - args:
+                - --leader-elect
+                command:
+                - /manager
+                env:
+                - name: RELATED_IMAGE_AUTHORINO
+                  value: quay.io/kuadrant/authorino:latest
+                image: quay.io/kuadrant/authorino-operator:latest
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                ports:
+                - containerPort: 8080
+                  name: metrics
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 300Mi
+                  requests:
+                    cpu: 200m
+                    memory: 200Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - ALL
+                  readOnlyRootFilesystem: true
+                  seccompProfile:
+                    type: RuntimeDefault
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: authorino-operator
+              terminationGracePeriodSeconds: 10
+      - label:
+          app.kubernetes.io/component: manager
+          app.kubernetes.io/created-by: dns-operator
+          app.kubernetes.io/instance: controller-manager
+          app.kubernetes.io/managed-by: kustomize
+          app.kubernetes.io/name: deployment
+          app.kubernetes.io/part-of: dns-operator
+          control-plane: dns-operator-controller-manager
+        name: dns-operator-controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              control-plane: dns-operator-controller-manager
+          strategy: {}
+          template:
+            metadata:
+              annotations:
+                kubectl.kubernetes.io/default-container: manager
+              labels:
+                control-plane: dns-operator-controller-manager
+            spec:
+              containers:
+              - args:
+                - --metrics-bind-address=:8080
+                - --leader-elect
+                - --provider=aws,azure,google,endpoint,coredns,inmemory
+                command:
+                - /manager
+                env:
+                - name: WATCH_NAMESPACES
+                - name: CLUSTER_SECRET_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                envFrom:
+                - configMapRef:
+                    name: dns-operator-controller-env
+                image: quay.io/kuadrant/dns-operator:latest
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                ports:
+                - containerPort: 8080
+                  name: metrics
+                - containerPort: 8082
+                  name: pprof
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 128Mi
+                  requests:
+                    cpu: 10m
+                    memory: 64Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - ALL
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: dns-operator-controller-manager
+              terminationGracePeriodSeconds: 10
       - label:
           app: kuadrant
           control-plane: controller-manager
@@ -769,7 +1301,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.namespace
-                image: quay.io/kuadrant/kuadrant-operator:latest
+                image: quay.io/kuadrant/kuadrant-operator:olmv1-static-poc
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -815,7 +1347,147 @@ spec:
               volumes:
               - emptyDir: {}
                 name: extensions-socket-volume
+      - label:
+          control-plane: controller-manager
+        name: limitador-operator-controller-manager
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              control-plane: controller-manager
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                app: limitador-operator
+                control-plane: controller-manager
+            spec:
+              containers:
+              - args:
+                - --leader-elect
+                command:
+                - /manager
+                env:
+                - name: RELATED_IMAGE_LIMITADOR
+                  value: quay.io/kuadrant/limitador:latest
+                image: quay.io/kuadrant/limitador-operator:latest
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 15
+                  periodSeconds: 20
+                name: manager
+                ports:
+                - containerPort: 8080
+                  name: metrics
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 300Mi
+                  requests:
+                    cpu: 200m
+                    memory: 200Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+              securityContext:
+                runAsNonRoot: true
+              serviceAccountName: limitador-operator-controller-manager
+              terminationGracePeriodSeconds: 10
+      - label:
+          app: mcp-controller
+          component: controller
+        name: mcp-gateway-controller
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: mcp-controller
+              component: controller
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                app: mcp-controller
+                component: controller
+            spec:
+              containers:
+              - command:
+                - ./mcp_controller
+                - --log-level=0
+                env:
+                - name: RELATED_IMAGE_ROUTER_BROKER
+                  value: ghcr.io/kuadrant/mcp-gateway:latest
+                image: ghcr.io/kuadrant/mcp-controller:latest
+                imagePullPolicy: IfNotPresent
+                livenessProbe:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  initialDelaySeconds: 10
+                  periodSeconds: 30
+                name: mcp-controller
+                ports:
+                - containerPort: 8081
+                  name: health
+                  protocol: TCP
+                - containerPort: 8082
+                  name: metrics
+                  protocol: TCP
+                readinessProbe:
+                  httpGet:
+                    path: /readyz
+                    port: 8081
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 256Mi
+                  requests:
+                    cpu: 50m
+                    memory: 64Mi
+              serviceAccountName: mcp-controller
       permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        serviceAccountName: authorino-operator
       - rules:
         - apiGroups:
           - ""
@@ -881,7 +1553,63 @@ spec:
           verbs:
           - create
           - patch
+        serviceAccountName: dns-operator-controller-manager
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
         serviceAccountName: kuadrant-operator-controller-manager
+      - rules:
+        - apiGroups:
+          - ""
+          - coordination.k8s.io
+          resources:
+          - configmaps
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        serviceAccountName: limitador-operator-controller-manager
     strategy: deployment
   installModes:
   - supported: false
@@ -920,6 +1648,8 @@ spec:
     name: Red Hat
     url: https://github.com/Kuadrant/kuadrant-operator
   relatedImages:
+  - image: quay.io/kuadrant/authorino:latest
+    name: authorino
   - image: quay.io/kuadrant/wasm-shim:latest
     name: wasmshim
   - image: quay.io/kuadrant/developer-portal-controller:latest
@@ -928,4 +1658,8 @@ spec:
     name: console-plugin-latest
   - image: quay.io/kuadrant/console-plugin:v0.1.5-2
     name: console-plugin-pf5
-  version: 0.0.0
+  - image: quay.io/kuadrant/limitador:latest
+    name: limitador
+  - image: ghcr.io/kuadrant/mcp-gateway:latest
+    name: router-broker
+  version: 0.0.1
