@@ -48,7 +48,7 @@ spec:
             properties:
               additionalHeadersRef:
                 description: |-
-                  AdditionalHeadersRef refers to a secret that contains extra headers to send in the probe request, this is primarily useful if an authentication
+                  AdditionalHeadersRef refers to a secretsssss that contains extra headers to send in the probe request, this is primarily useful if an authentication
                   token is required by the endpoint.
                 properties:
                   name:
