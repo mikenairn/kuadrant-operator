@@ -11,7 +11,7 @@
 
 components:
   dns-operator:
-    repo: Kuadrant/dns-operator
+    repo: mikenairn/dns-operator
     chart-path: charts/dns-operator
     tracked-branch: component-chart-sync
     ref: component-chart-sync
