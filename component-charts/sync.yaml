@@ -13,8 +13,8 @@ components:
   dns-operator:
     repo: Kuadrant/dns-operator
     chart-path: charts/dns-operator
-    tracked-branch: main
-    ref: main
+    tracked-branch: component-chart-sync
+    ref: component-chart-sync
     auto-merge: true
 #  authorino-operator:
 #    repo: Kuadrant/authorino-operator
