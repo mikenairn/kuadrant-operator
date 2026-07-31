@@ -15,7 +15,7 @@ components:
     chart-path: charts/dns-operator
     tracked-branch: component-chart-sync
     ref: component-chart-sync
-    auto-merge: true
+    auto-merge: false
 #  authorino-operator:
 #    repo: Kuadrant/authorino-operator
 #    chart-path: charts/authorino-operator
