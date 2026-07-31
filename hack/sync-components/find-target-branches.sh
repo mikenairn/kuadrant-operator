@@ -76,4 +76,4 @@ for branch in $(candidates); do
     fi
 done
 
-echo "$MATCHES"
+echo "$MATCHES" | jq -c .
