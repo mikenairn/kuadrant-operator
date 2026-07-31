@@ -1,5 +1,7 @@
 # DNS Operator
 
+RANDOM CHANGE - DELETE ME
+
 This is the Helm Chart to install the official Kuadrant DNS Kubernetes Operator
 
 ## Installation
