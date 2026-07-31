@@ -26,10 +26,11 @@ MIN_MINOR="${MIN_VERSION##*.}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# List candidate branches: main + release-X.Y where X.Y >= MIN_VERSION
+# List candidate branches: default branch + release-X.Y where X.Y >= MIN_VERSION
 candidates() {
+    DEFAULT_BRANCH=$(gh api "repos/${REPO}" --jq '.default_branch')
     gh api "repos/${REPO}/branches" --paginate --jq '.[].name' | while read -r branch; do
-        if [ "$branch" = "main" ]; then
+        if [ "$branch" = "$DEFAULT_BRANCH" ]; then
             echo "$branch"
         elif [[ "$branch" =~ ^release-([0-9]+)\.([0-9]+)$ ]]; then
             major="${BASH_REMATCH[1]}"
