@@ -5,6 +5,7 @@ on:
     branches:
       - "*"
       - "!main"
+      - "!component-chart-sync"
   workflow_dispatch: {}
 
 jobs:
