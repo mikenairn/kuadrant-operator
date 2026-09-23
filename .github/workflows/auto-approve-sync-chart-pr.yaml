@@ -27,7 +27,7 @@ jobs:
     if: |
       github.event.pull_request.head.repo.full_name == github.repository &&
       startsWith(github.head_ref, 'sync/') &&
-      github.event.pull_request.user.login == 'kuadrant-dev' &&
+      github.event.pull_request.user.login == 'mikenairn' &&
       startsWith(github.event.pull_request.title, 'chore(deps)')
     permissions:
       pull-requests: write
