@@ -1,5 +1,7 @@
 # Kuadrant Operator
 
+TEST DO NOT MERGE
+
 [![Code Style](https://github.com/Kuadrant/kuadrant-operator/actions/workflows/code-style.yaml/badge.svg)](https://github.com/Kuadrant/kuadrant-operator/actions/workflows/code-style.yaml)
 [![Testing](https://github.com/Kuadrant/kuadrant-operator/actions/workflows/test.yaml/badge.svg)](https://github.com/Kuadrant/kuadrant-operator/actions/workflows/test.yaml)
 [![codecov](https://codecov.io/gh/Kuadrant/kuadrant-operator/branch/main/graph/badge.svg?token=4Z16KPS3HT)](https://codecov.io/gh/Kuadrant/kuadrant-operator)
