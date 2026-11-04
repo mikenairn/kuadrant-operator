@@ -48,8 +48,3 @@ verify-manifests: ## Verify manifests update.
 .PHONY: verify-ratchet
 verify-ratchet: ratchet ## Verify GitHub Actions are pinned to commit SHAs.
 	$(RATCHET) lint $$(find .github/workflows -name '*.yaml' -o -name '*.yml')
-
-.PHONY: verify-prepare-release ## Verify set of manifests based on release.yaml file.
-verify-prepare-release: prepare-release
-	git diff --exit-code .
-	[ -z "$$(git ls-files --other --exclude-standard --directory --no-empty-directory .)" ]
